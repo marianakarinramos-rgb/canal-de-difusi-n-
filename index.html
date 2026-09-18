@@ -827,9 +827,7 @@ ${p.desc ? p.desc + '
         }
 
         function aumentoMasivo() {
-            let pct = prompt("Modificación porcentual de precios:
-• Ingresá un número positivo para aumentar (Ej: 10 para +10%)
-• Ingresá un número negativo para bajar o corregir (Ej: -3 para -3%)");
+            let pct = prompt("Modificación porcentual de precios:\n• Ingresá un número positivo para aumentar (Ej: 10 para +10%)\n• Ingresá un número negativo para bajar o corregir (Ej: -3 para -3%)");
             if(pct !== null && pct.trim() !== "" && !isNaN(pct)) { 
                 let pNum = parseFloat(pct); let m = 1 + (pNum / 100); 
                 db.productos.forEach(x => { if (x.precio) { x.precio = Math.round(x.precio * m); } }); 
