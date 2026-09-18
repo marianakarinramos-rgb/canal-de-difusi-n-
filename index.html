@@ -379,7 +379,7 @@
         </div>
     </div>
 
-    <!-- MODAL EDICIÓN PRODUCTO (AJUSTADO PARA DESCRIPCIONES LARGAS) -->
+    <!-- MODAL EDICIÓN PRODUCTO -->
     <div id="modal-stock" class="fixed inset-0 bg-black/70 hidden items-center justify-center p-4 backdrop-blur-sm z-[999998]">
         <div class="bg-card border border-borderline rounded-3xl w-full max-w-md shadow-2xl p-6 fade-in">
             <div class="flex justify-between items-center mb-4 border-b border-borderline pb-3"><h3 class="font-bold text-main text-base" id="modal-stock-title">Artículo</h3><button onclick="cerrarModal('modal-stock')" class="text-muted hover:text-red-600"><i class="fas fa-times text-lg"></i></button></div>
@@ -392,7 +392,6 @@
                 <div><label class="text-[9px] font-bold text-muted uppercase block mb-1">Nombre de Producto</label><input type="text" id="stock-nombre" class="w-full border border-borderline bg-input text-main p-2.5 rounded-lg text-sm font-bold" required></div>
                 
                 <div>
-                    <!-- El textarea ahora no tiene límite para permitir estructurar posteos de difusión -->
                     <label class="text-[9px] font-bold text-muted uppercase block mb-1">Descripción / Formato Posteo (Permite saltos de línea)</label>
                     <textarea id="stock-desc" rows="5" class="w-full border border-borderline bg-input text-main p-2.5 rounded-lg text-xs resize-none placeholder-muted" placeholder="Ej: 🔥 LIQUIDACIÓN 🔥&#10;Efectivo: $250.000&#10;3 cuotas: $320.040&#10;&#10;Medidas:&#10;Ancho: 80cm..."></textarea>
                 </div>
@@ -411,16 +410,16 @@
 
     <script>
         const firebaseConfig = {
-            apiKey: "TU_API_KEY",
-            authDomain: "TU_PROYECTO.firebaseapp.com",
-            projectId: "TU_PROYECTO",
-            storageBucket: "TU_PROYECTO.firebasestorage.app",
-            messagingSenderId: "TU_MESSAGING_SENDER_ID",
-            appId: "TU_APP_ID"
+            apiKey: "AIzaSyA_vtddiCqbtji2p1zU-l82G9dSQSJnZEY",
+            authDomain: "canal-de-difusion.firebaseapp.com",
+            projectId: "canal-de-difusion",
+            storageBucket: "canal-de-difusion.firebasestorage.app",
+            messagingSenderId: "145107999328",
+            appId: "1:145107999328:web:b7cb92acc587d7a4158105"
         };
 
         let firestoreDb = null; 
-        let esModoNube = false; 
+        let esModoNube = true; 
         let firebaseLoaded = false;
         let isUploading = false; 
 
@@ -602,7 +601,6 @@
         }
         function selCat(c) { catActiva = c; renderCats(); renderTiendaWeb(); }
 
-        // El rediseño de renderTiendaWeb implementa el formato Feed de un Canal de Difusión
         function renderTiendaWeb() {
             const elSearch = document.getElementById('buscador-tienda');
             const t = elSearch ? elSearch.value.toLowerCase() : '';
@@ -627,7 +625,6 @@
                                 <h4 class="text-xl font-black text-main mb-1 leading-tight">${p.nombre}</h4>
                                 <div class="text-2xl font-black text-accent mb-4">$${(p.precio||0).toLocaleString('es-AR')}</div>
                                 
-                                <!-- Se usa whitespace-pre-wrap para mostrar los saltos de línea (cuotas, medidas, etc) -->
                                 ${p.desc ? `<div class="text-sm text-main whitespace-pre-wrap leading-relaxed mb-6 font-medium">${p.desc}</div>` : ''}
                                 
                                 <div class="mt-auto border-t border-borderline pt-4 flex gap-3">
@@ -639,7 +636,6 @@
             }).join('') : '<div class="col-span-full py-16 text-center text-muted font-bold text-sm">No hay productos en esta categoría.</div>';
         }
 
-        // Nueva función para compartir el texto del posteo directamente
         function compartirProducto(id) {
             const p = db.productos.find(x => x.id === id); if(!p) return;
             const link = window.location.href.split('?')[0] + '?modo=tienda';
