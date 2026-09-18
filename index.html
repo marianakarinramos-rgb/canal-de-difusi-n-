@@ -96,7 +96,6 @@
         
         #public-catalog { position: fixed; inset: 0; background-color: var(--bg-base); z-index: 99999; display: none; flex-direction: column; overflow-y: auto; scroll-behavior: smooth; }
         
-        /* Modificación para Feed */
         .product-card { background: var(--bg-card); border-bottom: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s; }
         @media (min-width: 768px) {
             .product-card { border: 1px solid var(--border-color); border-radius: 16px; }
@@ -205,7 +204,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                         <div class="bg-card p-5 rounded-2xl shadow-sm border border-borderline">
                             <h3 class="text-sm font-bold text-main mb-1"><i class="fas fa-bolt text-accent mr-2"></i> Subida Masiva de Fotos</h3>
-                            <p class="text-[10px] text-muted mb-3">Seleccioná fotos juntas. El sistema detecta el número de SKU automáticamente.</p>
+                            <p class="text-[10px] text-muted mb-3">Seleccioná fotos juntas. Compresión WebP automática.</p>
                             <label class="bg-input text-main border border-borderline font-bold px-4 py-2.5 rounded-xl shadow-sm flex items-center justify-center text-xs cursor-pointer w-full transition hover:border-accent hover:text-accent">
                                 <i class="fas fa-images mr-2"></i> Seleccionar Imágenes
                                 <input type="file" multiple accept="image/*" class="hidden" id="input-imagenes-catalogo" onchange="procesarImagenesCatalogo(event)">
@@ -337,7 +336,6 @@
             <div class="max-w-2xl mx-auto flex gap-2 overflow-x-auto pb-2 px-4 md:px-0 scrollbar-none" id="contenedor-categorias"></div>
         </div>
         
-        <!-- GRID AJUSTADO A FEED MÓVIL (1 COLUMNA) -->
         <div class="flex-grow md:p-8 overflow-y-auto">
             <div class="max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-0 md:gap-6" id="grid-productos-tienda"></div>
         </div>
@@ -392,7 +390,7 @@
                 <div><label class="text-[9px] font-bold text-muted uppercase block mb-1">Nombre de Producto</label><input type="text" id="stock-nombre" class="w-full border border-borderline bg-input text-main p-2.5 rounded-lg text-sm font-bold" required></div>
                 
                 <div>
-                    <label class="text-[9px] font-bold text-muted uppercase block mb-1">Descripción / Formato Posteo (Permite saltos de línea)</label>
+                    <label class="text-[9px] font-bold text-muted uppercase block mb-1">Descripción / Formato Posteo</label>
                     <textarea id="stock-desc" rows="5" class="w-full border border-borderline bg-input text-main p-2.5 rounded-lg text-xs resize-none placeholder-muted" placeholder="Ej: 🔥 LIQUIDACIÓN 🔥&#10;Efectivo: $250.000&#10;3 cuotas: $320.040&#10;&#10;Medidas:&#10;Ancho: 80cm..."></textarea>
                 </div>
 
@@ -405,7 +403,6 @@
         </div>
     </div>
 
-    <!-- CONTENEDOR DE IMPRESIÓN PDF -->
     <div id="pdf-mayorista-preview" style="display:none;"></div>
 
     <script>
@@ -423,7 +420,16 @@
         let firebaseLoaded = false;
         let isUploading = false; 
 
-        try { if (typeof firebase !== 'undefined') { firebase.initializeApp(firebaseConfig); firestoreDb = firebase.firestore(); } } catch(err) {}
+        try { 
+            if (typeof firebase !== 'undefined') { 
+                firebase.initializeApp(firebaseConfig); 
+                firestoreDb = firebase.firestore(); 
+            } else {
+                alert("CRÍTICO: Librería de Firebase no detectada.");
+            }
+        } catch(err) { 
+            alert("ERROR INIT FIREBASE: " + err.message); 
+        }
 
         let db = { config: {}, usuarios: [], productos: [] };
         
@@ -452,15 +458,26 @@
             abrirModalUI('modal-visor-imagen');
         }
 
+        // GUARDADO OPTIMIZADO CON PROTECTOR DE LÍMITE (SIZE WATCHER)
         function guardarBD() {
             return new Promise((resolve) => {
                 isUploading = true;
                 try {
                     guardarLocal(db); 
                     if(esModoNube && firestoreDb) {
+                        const payloadSize = new Blob([JSON.stringify(db)]).size;
+                        if(payloadSize > 950000) { // 950KB danger zone
+                            alert("⚠️ LÍMITE DE CAPACIDAD: Tu base de datos superó los 950KB. Borrá productos viejos o fotos grandes para evitar colapsar Firebase.");
+                            resolve(false);
+                            return;
+                        }
+
                         firestoreDb.collection("lite_erp").doc("tienda_base").set(db)
                             .then(() => resolve(true))
-                            .catch(e => { console.error(e); resolve(false); });
+                            .catch(e => { 
+                                alert("🔴 ERROR AL GUARDAR EN NUBE: " + e.message); 
+                                resolve(false); 
+                            });
                     } else { resolve(true); }
                 } catch (e) { resolve(false); }
                 finally { setTimeout(() => { isUploading = false; }, 800); }
@@ -506,6 +523,7 @@
                     if(!firebaseLoaded) { firebaseLoaded = true; iniciarAppSegunRouting(); } 
                 }, err => { 
                     clearTimeout(fbTimeout); 
+                    alert("🔴 ERROR DE LECTURA FIREBASE (Posible regla de seguridad bloqueando): " + err.message);
                     if(!firebaseLoaded) { firebaseLoaded = true; iniciarAppSegunRouting(); } 
                 });
             } else { iniciarAppSegunRouting(); }
@@ -582,7 +600,7 @@
             document.getElementById('carga-overlay-global').style.display = 'flex';
             document.getElementById('carga-overlay-msg').innerText = 'Subiendo logo...';
             try {
-                const base64 = await comprimirImagenAsincrona(file, 250);
+                const base64 = await comprimirImagenAsincrona(file, 200);
                 db.config.logoBase64 = base64; aplicarConfiguracion(); mostrarToast('Logo actualizado'); guardarBD();
             } catch(err) { mostrarToast('Error al procesar logo', 'bg-red-600'); } 
             finally { document.getElementById('carga-overlay-global').style.display = 'none'; }
@@ -878,6 +896,7 @@
             renderStock(); document.getElementById('carga-overlay-global').style.display = 'none'; document.getElementById('input-imagenes-catalogo').value = ''; mostrarToast(`${vinculadas} fotos vinculadas.`); guardarBD();
         }
 
+        // COMPRESIÓN EXTREMA WEBP + RECORTE A 400px (SÚPER LIVIANO)
         function comprimirImagenAsincrona(file, maxSizeInput = null) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -885,14 +904,18 @@
                     const img = new Image();
                     img.onload = function() {
                         const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-                        const maxSize = maxSizeInput || 500; 
+                        // Límite de 400px de resolución
+                        const maxSize = maxSizeInput || 400; 
                         let width = img.width; let height = img.height; 
                         if(width > height) { if(width > maxSize) { height *= maxSize / width; width = maxSize; } } 
                         else { if(height > maxSize) { width *= maxSize / height; height = maxSize; } }
+                        
                         canvas.width = Math.round(width); canvas.height = Math.round(height);
                         ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.65)); 
+                        
+                        // Conversión a WebP con 0.4 de calidad (Ultra-Liviano)
+                        resolve(canvas.toDataURL('image/webp', 0.4)); 
                     };
                     img.onerror = reject; img.src = event.target.result;
                 };
