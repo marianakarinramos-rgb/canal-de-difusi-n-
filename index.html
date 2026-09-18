@@ -657,7 +657,12 @@
         function compartirProducto(id) {
             const p = db.productos.find(x => x.id === id); if(!p) return;
             const link = window.location.href.split('?')[0] + '?modo=tienda';
-            const texto = `*${p.nombre}*\n$${(p.precio||0).toLocaleString('es-AR')}\n\n${p.desc ? p.desc + '\n\n' : ''}Ver catálogo: ${link}`;
+            const texto = `*${p.nombre}*
+$${(p.precio||0).toLocaleString('es-AR')}
+
+${p.desc ? p.desc + '
+
+' : ''}Ver catálogo: ${link}`;
             
             if (navigator.share) {
                 navigator.share({ title: p.nombre, text: texto }).catch(() => {});
@@ -692,15 +697,22 @@
             if(!carritoWeb.length) return;
             const n=document.getElementById('web-cli-nombre').value, tel=document.getElementById('web-cli-tel').value, d=document.getElementById('web-cli-dir').value;
             if(!n || !tel || !d) return mostrarToast('Completá los datos', 'bg-red-600');
-            let m=`Hola! Pedido ${db.config.nombreEmpresa}:\n\n`; let tot=0;
+            let m=`Hola! Pedido ${db.config.nombreEmpresa}:
+
+`; let tot=0;
             
             carritoWeb.forEach(x=>{ 
                 let s = x.cant * (x.p || 0); tot+=s; 
-                m+=`▪ ${x.cant}x ${x.n} - $${s.toLocaleString('es-AR')}\n`; 
+                m+=`▪ ${x.cant}x ${x.n} - $${s.toLocaleString('es-AR')}
+`; 
                 const pDB = db.productos.find(i=>i.id===x.id); 
                 if(pDB) pDB.cantidad -= x.cant; 
             });
-            m+=`\n*TOTAL: $${tot.toLocaleString('es-AR')}*\n👤 ${n}\n📞 ${tel}\n📍 ${d}`;
+            m+=`
+*TOTAL: $${tot.toLocaleString('es-AR')}*
+👤 ${n}
+📞 ${tel}
+📍 ${d}`;
             
             carritoWeb=[]; updBadge(); cerrarModal('modal-carrito-web'); renderTiendaWeb(); 
             
@@ -815,7 +827,9 @@
         }
 
         function aumentoMasivo() {
-            let pct = prompt("Modificación porcentual de precios:\n• Ingresá un número positivo para aumentar (Ej: 10 para +10%)\n• Ingresá un número negativo para bajar o corregir (Ej: -3 para -3%)");
+            let pct = prompt("Modificación porcentual de precios:
+• Ingresá un número positivo para aumentar (Ej: 10 para +10%)
+• Ingresá un número negativo para bajar o corregir (Ej: -3 para -3%)");
             if(pct !== null && pct.trim() !== "" && !isNaN(pct)) { 
                 let pNum = parseFloat(pct); let m = 1 + (pNum / 100); 
                 db.productos.forEach(x => { if (x.precio) { x.precio = Math.round(x.precio * m); } }); 
