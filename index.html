@@ -175,7 +175,7 @@
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4 border-b border-borderline pb-4">
                         <div>
                             <h2 class="text-2xl font-bold text-main">Gestión de Catálogo</h2>
-                            <p class="text-muted text-xs">Cargá tus productos, subí fotos y armá posteos con descripción.</p>
+                            <p class="text-muted text-xs">Cargá tus productos, subí fotos y armá posteos para tu canal.</p>
                         </div>
                         
                         <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto justify-start lg:justify-end">
@@ -478,7 +478,6 @@
             abrirModalUI('modal-visor-imagen');
         }
 
-        // NUEVA FUNCIÓN: Muestra detalle del producto con descripción y botón para agregar
         function verDetalleProducto(id) {
             const p = db.productos.find(x => x.id === id);
             if (!p) return;
@@ -671,7 +670,6 @@
             const grid = document.getElementById('grid-productos-tienda');
             if(!grid) return;
             
-            // SE APLICÓ EL CAMBIO: Ahora onclick llama a verDetalleProducto()
             grid.innerHTML = arr.length ? arr.map(p => {
                 const img = (p.imagenBase64 && p.imagenBase64.length > 50) ? p.imagenBase64 : 'https://via.placeholder.com/600/FDFBFB/B87C51?text=Tienda';
                 return `<div class="product-card bg-card shadow-sm mb-2 md:mb-0">
@@ -690,7 +688,7 @@
                                 
                                 <div class="mt-auto border-t border-borderline pt-4 flex gap-3">
                                     <button onclick="addCar('${p.id}')" class="flex-1 bg-accent text-accenttext py-3.5 rounded-xl font-bold shadow-sm flex items-center justify-center hover:opacity-90 transition text-sm"><i class="fas fa-cart-plus mr-2"></i> Sumar al pedido</button>
-                                    <button onclick="compartirProducto('${p.id}')" class="w-[50px] h-[50px] bg-input border border-borderline text-main rounded-xl flex items-center justify-center hover:text-accent transition shadow-sm shrink-0" title="Compartir texto"><i class="fab fa-whatsapp text-xl"></i></button>
+                                    <button onclick="compartirProducto('${p.id}')" class="w-[50px] h-[50px] bg-input border border-borderline text-main rounded-xl flex items-center justify-center hover:text-accent transition shadow-sm shrink-0" title="Copiar texto para Canal"><i class="fab fa-whatsapp text-xl"></i></button>
                                 </div>
                             </div>
                         </div>`;
@@ -700,13 +698,15 @@
         function compartirProducto(id) {
             const p = db.productos.find(x => x.id === id); if(!p) return;
             const link = window.location.href.split('?')[0] + '?modo=tienda';
-            const texto = "*" + p.nombre + "*\n$" + (p.precio||0).toLocaleString('es-AR') + "\n\n" + (p.desc ? p.desc + "\n\n" : "") + "Ver catálogo: " + link;
+            
+            // ESTRETEGIA DE COPY: Optimizado para impactar en Canales de Difusión
+            const texto = `🔥 *${p.nombre}*\n💸 *$${(p.precio||0).toLocaleString('es-AR')}*\n\n${p.desc ? p.desc + "\n\n" : ""}🛒 *Comprá directo y asegurá tu stock acá:* 👇\n${link}`;
             
             if (navigator.share) {
                 navigator.share({ title: p.nombre, text: texto }).catch(() => {});
             } else {
                 navigator.clipboard.writeText(texto);
-                mostrarToast('¡Texto del posteo copiado!');
+                mostrarToast('¡Texto optimizado copiado para tu canal!');
             }
         }
 
@@ -747,7 +747,6 @@
             
             carritoWeb=[]; updBadge(); cerrarModal('modal-carrito-web'); renderTiendaWeb(); 
             
-            // SE APLICÓ EL CAMBIO: Abrir WhatsApp en pestaña nueva (_blank)
             const phone = db.config.whatsappTurnos;
             if(phone) { window.open("https://wa.me/" + phone + "?text=" + encodeURIComponent(m), "_blank"); } 
             else { mostrarToast('Sin WhatsApp configurado', 'bg-orange-500'); }
@@ -758,13 +757,13 @@
         function compartirTienda() {
             const shareData = {
                 title: db.config.nombreEmpresa || 'Mi Tienda',
-                text: "Mirá nuestro catálogo online de " + db.config.nombreEmpresa + ":",
+                text: "🚀 ¡Conocé nuestro catálogo completo y comprá online!👇",
                 url: window.location.href.split('?')[0] + '?modo=tienda'
             };
             if (navigator.share) {
                 navigator.share(shareData).catch(() => {});
             } else {
-                navigator.clipboard.writeText(shareData.url);
+                navigator.clipboard.writeText(shareData.text + "\n" + shareData.url);
                 mostrarToast('¡Link de la tienda copiado!');
             }
         }
